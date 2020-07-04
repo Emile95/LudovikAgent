@@ -28,7 +28,6 @@ namespace Console
             } 
             catch(SocketException e) 
             {
-                System.Console.WriteLine("Disconnection of an cliebt");
             }
 
             System.Console.Read();
@@ -66,24 +65,25 @@ namespace Console
             );
 
             //Result of the command
-            ConsoleLog consoleLog;
+            object serializedObject;
 
             using (MemoryStream memorystream = new MemoryStream(buffer))
             {
                 
                 BinaryFormatter bf = new BinaryFormatter();
-                consoleLog = bf.Deserialize(memorystream) as ConsoleLog;
+                serializedObject = bf.Deserialize(memorystream) as ConsoleLog;
             }
 
-            System.Console.WriteLine(consoleLog.log);
+            if(serializedObject is ProcessRunInfo)
 
             //Send send data
-            socket.BeginSend(buffer, 0, buffer.Length, SocketFlags.None, new AsyncCallback(SendCallBack), socket);
+            //socket.BeginSend(buffer, 0, buffer.Length, SocketFlags.None, new AsyncCallback(SendCallBack), socket);
 
             //Reanable this socket to receive data
             socket.BeginReceive(socketBuffer, 0, socketBuffer.Length, SocketFlags.None, new AsyncCallback(ReceiveCallBack), socket);
         }
 
+        /*
         private static void SendCallBack(IAsyncResult result)
         {
             //this socket
@@ -91,6 +91,6 @@ namespace Console
 
             //send data to the connected remote
             socket.EndSend(result);
-        }
+        }*/
     }
 }
