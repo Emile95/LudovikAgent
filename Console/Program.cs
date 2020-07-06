@@ -1,4 +1,6 @@
-﻿using Library.Encodable;
+﻿using Library.Application;
+using Library.Application.ProcessRunner;
+using Library.Encodable;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -6,6 +8,7 @@ using System.Linq;
 using System.Net;
 using System.Net.Sockets;
 using System.Runtime.Serialization.Formatters.Binary;
+using System.Text;
 
 namespace Console
 {
@@ -17,9 +20,14 @@ namespace Console
         static void Main(string[] args)
         {
             //Bind an valid ipAddres
-            _serverSocket.Bind(new IPEndPoint(IPAddress.Any, 100));
+            _serverSocket.Bind(new IPEndPoint(IPAddress.Any, 300));
+
+            string port = ((IPEndPoint)_serverSocket.LocalEndPoint).Port.ToString();
+            System.Console.WriteLine("Agent Running on port : " + ((IPEndPoint)_serverSocket.LocalEndPoint).Port.ToString());
+            File.WriteAllText(Directory.GetCurrentDirectory()+"\\port", port);
+
             //Max of client socket
-            _serverSocket.Listen(5);
+            _serverSocket.Listen(0);
 
             try
             {
@@ -30,7 +38,7 @@ namespace Console
             {
             }
 
-            System.Console.Read();
+            while (true) { }
         }
 
         private static void AcceptCallBack(IAsyncResult result)
@@ -71,13 +79,16 @@ namespace Console
             {
                 
                 BinaryFormatter bf = new BinaryFormatter();
-                serializedObject = bf.Deserialize(memorystream) as ConsoleLog;
+                memorystream.Position = 0;
+                serializedObject = bf.Deserialize(memorystream);
             }
 
-            if(serializedObject is ProcessRunInfo)
-
-            //Send send data
-            //socket.BeginSend(buffer, 0, buffer.Length, SocketFlags.None, new AsyncCallback(SendCallBack), socket);
+            Application app = null;
+            if (serializedObject is ProcessRunInfo)
+                app = new ProcessRunner(serializedObject as ProcessRunInfo, socket);
+            else if (serializedObject is ConsoleLog)
+                System.Console.WriteLine((serializedObject as ConsoleLog).log);
+            if(app != null) app.Run();
 
             //Reanable this socket to receive data
             socket.BeginReceive(socketBuffer, 0, socketBuffer.Length, SocketFlags.None, new AsyncCallback(ReceiveCallBack), socket);

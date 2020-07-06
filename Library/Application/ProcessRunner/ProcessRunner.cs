@@ -1,5 +1,7 @@
 ﻿using Library.Encodable;
+using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
 using System.Net.Sockets;
 
 namespace Library.Application.ProcessRunner
@@ -12,9 +14,13 @@ namespace Library.Application.ProcessRunner
 
         public ProcessRunner(ProcessRunInfo processRunInfo, Socket clientSocket)
         {
+            _process = new Process();
             _process.StartInfo.FileName = processRunInfo.fileName;
             _process.StartInfo.Arguments = processRunInfo.args;
             _process.StartInfo.WorkingDirectory = processRunInfo.workingDirectory;
+
+            /*foreach(KeyValuePair<string,string> variable in processRunInfo.environment)
+                _process.StartInfo.Environment.Add(variable);*/
 
             _process.StartInfo.UseShellExecute = false;
             _process.StartInfo.RedirectStandardOutput = true;
@@ -45,6 +51,9 @@ namespace Library.Application.ProcessRunner
 
         public sealed override void Run()
         {
+            if (!Directory.Exists(_process.StartInfo.WorkingDirectory))
+                Directory.CreateDirectory(_process.StartInfo.WorkingDirectory);
+
             _process.Start();
 
             _process.BeginErrorReadLine();
