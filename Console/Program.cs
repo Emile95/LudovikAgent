@@ -79,8 +79,8 @@ namespace Console
             {
                 
                 BinaryFormatter bf = new BinaryFormatter();
-                memorystream.Position = 0;
                 serializedObject = bf.Deserialize(memorystream);
+
             }
 
             Application app = null;

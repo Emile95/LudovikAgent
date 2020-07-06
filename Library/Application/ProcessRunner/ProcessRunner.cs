@@ -1,5 +1,5 @@
 ﻿using Library.Encodable;
-using System.Collections.Generic;
+using System;
 using System.Diagnostics;
 using System.IO;
 using System.Net.Sockets;
@@ -14,14 +14,21 @@ namespace Library.Application.ProcessRunner
 
         public ProcessRunner(ProcessRunInfo processRunInfo, Socket clientSocket)
         {
+            Console.WriteLine(processRunInfo.workingDirectory);
+
             _process = new Process();
             _process.StartInfo.FileName = processRunInfo.fileName;
             _process.StartInfo.Arguments = processRunInfo.args;
             _process.StartInfo.WorkingDirectory = processRunInfo.workingDirectory;
 
-            /*foreach(KeyValuePair<string,string> variable in processRunInfo.environment)
-                _process.StartInfo.Environment.Add(variable);*/
+            string[] vars = processRunInfo.vars.Split(",");
 
+            foreach (string var in vars)
+            {
+                string[] varSep = var.Split(":");
+                _process.StartInfo.Environment.Add(varSep[0],varSep[1]);
+            }
+                
             _process.StartInfo.UseShellExecute = false;
             _process.StartInfo.RedirectStandardOutput = true;
             _process.StartInfo.RedirectStandardError = true;
