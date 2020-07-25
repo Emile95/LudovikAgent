@@ -10,12 +10,14 @@ namespace Library.Application.ProcessRunner
     {
         #region Properties and Constructor
 
+        private readonly Socket _socket;
         private readonly Process _process;
+        private readonly string _key;
 
-        public ProcessRunner(ProcessRunInfo processRunInfo, Socket clientSocket)
+        public ProcessRunner(ProcessRunInfo processRunInfo, Socket socket, string key)
         {
-            Console.WriteLine(processRunInfo.workingDirectory);
-
+            _socket = socket;
+            _key = key;
             _process = new Process();
             _process.StartInfo.FileName = processRunInfo.fileName;
             _process.StartInfo.Arguments = processRunInfo.args;
@@ -32,23 +34,26 @@ namespace Library.Application.ProcessRunner
             _process.StartInfo.UseShellExecute = false;
             _process.StartInfo.RedirectStandardOutput = true;
             _process.StartInfo.RedirectStandardError = true;
-
+            
             _process.OutputDataReceived += (sender, args) => 
             {
-                /*
-                clientSocket.BeginSend(buffer, 0, buffer.Length, SocketFlags.None, (result) => {
-                    clientSocket.EndSend(result);
-                }, clientSocket);
-                */
+                _socket.Send(
+                    new ServerInstance<Log>() {
+                        key = _key,
+                        obj = new Log() { type = Log.Type.Info, message = args.Data }
+                    }.ToBinary()
+                );
             };
 
             _process.ErrorDataReceived += (sender, args) => 
             {
-                /*
-                clientSocket.BeginSend(buffer, 0, buffer.Length, SocketFlags.None, (result) => {
-                    clientSocket.EndSend(result);
-                }, clientSocket);
-                */
+                _socket.Send(
+                    new ServerInstance<Log>()
+                    {
+                        key = _key,
+                        obj = new Log() { type = Log.Type.Error, message = args.Data }
+                    }.ToBinary()
+                );
             };
         }
 
@@ -67,6 +72,14 @@ namespace Library.Application.ProcessRunner
             _process.BeginOutputReadLine();
 
             _process.WaitForExit();
+
+            /*_socket.Send(
+                new ServerInstance<Log>()
+                {
+                    key = _key,
+                    obj = new Log() { type = Log.Type.Error, message = args.Data }
+                }.ToBinary()
+            );*/
         }
 
         #endregion

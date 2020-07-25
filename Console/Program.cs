@@ -1,24 +1,27 @@
-﻿using Library.Application;
-using Library.Application.ProcessRunner;
-using Library.Encodable;
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Net;
-using System.Net.Sockets;
-using System.Runtime.Serialization.Formatters.Binary;
-using System.Text;
-
-namespace Console
+﻿namespace Console
 {
     class Program
     {
-        private static List<Tuple<Socket, byte[]>> _clientSockets = new List<Tuple<Socket,byte[]>>();
-        private static Socket _serverSocket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
-
         static void Main(string[] args)
         {
+            Server.Server server = new Server.Server();
+            server.Start();
+
+            bool runApp = true;
+            while (runApp)
+            {
+                string cmd = System.Console.ReadLine();
+                switch (cmd)
+                {
+                    case "quit":
+                        runApp = false;
+                        break;
+                }
+            }
+        }
+    }
+}
+            /*
             //Bind an valid ipAddres
             _serverSocket.Bind(new IPEndPoint(IPAddress.Any, 300));
 
@@ -39,14 +42,19 @@ namespace Console
             }
 
             while (true) { }
-        }
-
+            
+        }*/
+        /*
         private static void AcceptCallBack(IAsyncResult result)
         {
             //Add the client socket in list and stop accept new socket
             Socket socket = _serverSocket.EndAccept(result);
             byte[] buffer = new byte[1024];
-            _clientSockets.Add(new Tuple<Socket, byte[]>(socket, buffer));
+
+            Tuple < Socket, Dictionary<string, byte[]> >  tuple = new Tuple<Socket, Dictionary<string, byte[]>>(socket, new Dictionary<string, byte[]>());
+            tuple.
+
+            _clientSockets.Add(tuple);
 
             //Enable this socket to receive Data
             socket.BeginReceive(buffer, 0, buffer.Length, SocketFlags.None, new AsyncCallback(ReceiveCallBack), socket);
@@ -59,7 +67,7 @@ namespace Console
         {
             //this socket
             Socket socket = (Socket)result.AsyncState;
-            byte[] socketBuffer = _clientSockets.Single(o => o.Item1.Equals(socket)).Item2;
+            byte[] socketBuffer = new byte[1024];
 
             //stop this socket to receive data and get length of byte
             int received = socket.EndReceive(result);
@@ -77,24 +85,31 @@ namespace Console
 
             using (MemoryStream memorystream = new MemoryStream(buffer))
             {
-                
                 BinaryFormatter bf = new BinaryFormatter();
                 serializedObject = bf.Deserialize(memorystream);
-
             }
 
             Application app = null;
-            if (serializedObject is ProcessRunInfo)
-                app = new ProcessRunner(serializedObject as ProcessRunInfo, socket);
+            if (serializedObject is ServerInstance<ProcessRunInfo>)
+            {
+                ServerInstance<ProcessRunInfo> instance = serializedObject as ServerInstance<ProcessRunInfo>;
+                app = new ProcessRunner(
+                    instance.obj,
+                    socket,
+                    instance.key
+                );
+            }
+
             else if (serializedObject is ConsoleLog)
                 System.Console.WriteLine((serializedObject as ConsoleLog).log);
+
             if(app != null) app.Run();
 
             //Reanable this socket to receive data
             socket.BeginReceive(socketBuffer, 0, socketBuffer.Length, SocketFlags.None, new AsyncCallback(ReceiveCallBack), socket);
-        }
+        }*
 
-        /*
+        
         private static void SendCallBack(IAsyncResult result)
         {
             //this socket
@@ -102,6 +117,6 @@ namespace Console
 
             //send data to the connected remote
             socket.EndSend(result);
-        }*/
+        }
     }
-}
+}*/
